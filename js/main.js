@@ -195,26 +195,35 @@ $(document).ready(function () {
           var isMobile = isIOS || isAndroidMobile;
 
           if (isIOS) {
-            // iOS Safari blocks navigator.share in async chains.
-            // Open the image in a new tab — user long-presses to save to Photos, then shares on Instagram.
+            // iOS Safari: show image in an in-page overlay so user can long-press → Save to Photos
             var dataUrl = igCanvas.toDataURL("image/png");
-            var newTab = window.open();
-            if (newTab) {
-              newTab.document.write(
-                '<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">' +
-                  '<div style="text-align:center;color:#fff;font-family:sans-serif;padding:16px;">' +
-                  '<p style="font-size:16px;margin-bottom:12px;">Press and hold the image below, then tap <strong>Save to Photos</strong>.<br>Open Instagram and share from your camera roll.</p>' +
-                  '<img src="' +
-                  dataUrl +
-                  '" style="max-width:100%;border-radius:8px;" />' +
-                  "</div></body></html>",
-              );
-              newTab.document.close();
-            } else {
-              alert(
-                "Please allow pop-ups, or screenshot the result and share it on Instagram.",
-              );
-            }
+
+            // Remove any previous overlay
+            $("#ios-share-overlay").remove();
+
+            var overlay = $(
+              '<div id="ios-share-overlay" style="' +
+                "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);" +
+                "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+                'padding:20px;box-sizing:border-box;overflow-y:auto;">' +
+                '<p style="color:#fff;font-family:sans-serif;font-size:15px;text-align:center;margin-bottom:14px;">' +
+                "Press &amp; hold the image, then tap <strong>Save to Photos</strong>.<br>" +
+                "Then open Instagram and share from your camera roll.</p>" +
+                '<img src="' +
+                dataUrl +
+                '" style="max-width:100%;max-height:65vh;border-radius:8px;display:block;" />' +
+                '<button id="ios-overlay-close" style="margin-top:18px;padding:10px 28px;' +
+                'background:#fff;color:#42210b;border:none;border-radius:24px;font-size:15px;font-family:sans-serif;cursor:pointer;">' +
+                "Close</button>" +
+                "</div>",
+            );
+
+            $("body").append(overlay);
+
+            $("#ios-overlay-close").on("click", function () {
+              $("#ios-share-overlay").remove();
+            });
+
             btn.text("SHARE ON INSTAGRAM").prop("disabled", false);
           } else if (
             isAndroidMobile &&
