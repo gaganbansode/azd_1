@@ -187,17 +187,41 @@ $(document).ready(function () {
             type: "image/png",
           });
 
-          // Detect mobile: touch support + narrow screen
-          var isMobile =
-            ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-            window.innerWidth <= 768;
+          var ua = navigator.userAgent || "";
+          var isIOS = /iphone|ipad|ipod/i.test(ua);
+          var isAndroidMobile =
+            /android/i.test(ua) &&
+            ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+          var isMobile = isIOS || isAndroidMobile;
 
-          if (
-            isMobile &&
+          if (isIOS) {
+            // iOS Safari blocks navigator.share in async chains.
+            // Open the image in a new tab — user long-presses to save to Photos, then shares on Instagram.
+            var dataUrl = igCanvas.toDataURL("image/png");
+            var newTab = window.open();
+            if (newTab) {
+              newTab.document.write(
+                '<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">' +
+                  '<div style="text-align:center;color:#fff;font-family:sans-serif;padding:16px;">' +
+                  '<p style="font-size:16px;margin-bottom:12px;">Press and hold the image below, then tap <strong>Save to Photos</strong>.<br>Open Instagram and share from your camera roll.</p>' +
+                  '<img src="' +
+                  dataUrl +
+                  '" style="max-width:100%;border-radius:8px;" />' +
+                  "</div></body></html>",
+              );
+              newTab.document.close();
+            } else {
+              alert(
+                "Please allow pop-ups, or screenshot the result and share it on Instagram.",
+              );
+            }
+            btn.text("SHARE ON INSTAGRAM").prop("disabled", false);
+          } else if (
+            isAndroidMobile &&
             navigator.canShare &&
             navigator.canShare({ files: [file] })
           ) {
-            // Mobile: native share sheet — user can pick Instagram directly
+            // Android: native share sheet
             navigator
               .share({
                 files: [file],
